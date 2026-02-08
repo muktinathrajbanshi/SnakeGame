@@ -2,15 +2,22 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const box = 10; // size of snake segment and fruit
+
+const snakeSize = 20;
+const fruitSize = 30;
+
 const canvasSize = 400;
 
 let snake = [{x: 8 * box, y: 8 * box}];
+let snakePixelPos = snake.map(seg => ({x: seg.x, y: seg.y}));
 let direction = 'RIGHT';
 let nextDirection = 'RIGHT';
 let score = 0;
 let gameSpeed = 200; // starting speed in ms
 let gameInterval;
 let isPaused = false;
+let pulse = 0;
+let pulseSpeed = 0.1;
 
 // Load fruit images
 const fruitImages = {
@@ -51,17 +58,29 @@ function randomFruit() {
 
 // Draw the snake and fruit
 function draw() {
-  ctx.fillStyle = '#111';
-  ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-  // Draw snake
-  for (let i = 0; i < snake.length; i++) {
-    ctx.fillStyle = i === 0 ? 'lime' : 'green';
-    ctx.fillRect(snake[i].x, snake[i].y, box, box);
-  }
+pulse += pulseSpeed;
+const scale = 1 + 0.2 * Math.sin(pulse);
 
-  // Draw fruit
-  ctx.drawImage(food.img, food.x, food.y, box, box);
+ctx.fillStyle = '#111';
+ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+// Draw snake with shadow
+for (let i = 0; i < snake.length; i++) {
+ctx.save();
+ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+ctx.shadowBlur = 5;
+ctx.fillStyle = i === 0 ? 'lime' : 'green';
+ctx.fillRect(snakePixelPos[i].x, snakePixelPos[i].y, snakeSize, snakeSize);
+ctx.shadowBlur = 0;
+}
+
+  // Draw fruit with glow & pulse
+  ctx.save();
+  ctx.shadowColor = "yellow";
+  ctx.shadowBlur = 15;
+  ctx.drawImage(food.img, food.x, food.y, fruitSize * scale, fruitSize * scale);
+  ctx.restore();
 
   document.getElementById('score').innerText = score;
 }
@@ -106,6 +125,12 @@ function update() {
   }
 
   snake.unshift(head);
+
+  // Smooth interpolation for each snake segment
+    for (let i = 0; i < snake.length; i++) {
+    snakePixelPos[i].x += (snake[i].x - snakePixelPos[i].x) * 0.2;
+    snakePixelPos[i].y += (snake[i].y - snakePixelPos[i].y) * 0.2;
+    }
 
   // Eating fruit
   if (head.x === food.x && head.y === food.y) {
