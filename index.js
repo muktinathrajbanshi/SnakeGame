@@ -1,7 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const box = 10; // size of snake segment and fruit
+const box = 20; // size of snake segment and fruit
 
 const snakeSize = 20;
 const fruitSize = 30;
@@ -59,9 +59,11 @@ function randomFruit() {
 // Draw the snake and fruit
 function draw() {
 
+// pulse animation
 pulse += pulseSpeed;
 const scale = 1 + 0.2 * Math.sin(pulse);
 
+// background 
 ctx.fillStyle = '#111';
 ctx.fillRect(0, 0, canvasSize, canvasSize);
 
@@ -71,17 +73,34 @@ ctx.save();
 ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
 ctx.shadowBlur = 5;
 ctx.fillStyle = i === 0 ? 'lime' : 'green';
-ctx.fillRect(snakePixelPos[i].x, snakePixelPos[i].y, snakeSize, snakeSize);
-ctx.shadowBlur = 0;
+
+ctx.fillRect(
+    snakePixelPos[i].x, 
+    snakePixelPos[i].y, 
+    snakeSize, 
+    snakeSize
+);
+ctx.restore();
 }
 
   // Draw fruit with glow & pulse
   ctx.save();
   ctx.shadowColor = "yellow";
   ctx.shadowBlur = 15;
-  ctx.drawImage(food.img, food.x, food.y, fruitSize * scale, fruitSize * scale);
+
+  const cx = food.x + box / 2;
+  const cy = food.y + box / 2;
+
+  ctx.drawImage(
+    food.img,
+    cx - (fruitSize * scale) / 2,
+    cy - (fruitSize * scale) / 2,
+    fruitSize * scale,
+    fruitSize * scale
+  );
   ctx.restore();
 
+  // score
   document.getElementById('score').innerText = score;
 }
 
