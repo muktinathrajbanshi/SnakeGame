@@ -126,6 +126,10 @@ function update() {
 
   snake.unshift(head);
 
+  if (snakePixelPos.length < snake.length) {
+    snakePixelPos.unshift({ x: head.x, y: head.y });
+  }
+
   // Smooth interpolation for each snake segment
     for (let i = 0; i < snake.length; i++) {
     snakePixelPos[i].x += (snake[i].x - snakePixelPos[i].x) * 0.2;
