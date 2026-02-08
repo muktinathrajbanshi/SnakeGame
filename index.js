@@ -49,9 +49,16 @@ let food = randomFruit();
 
 function randomFruit() {
   const fruit = fruits[Math.floor(Math.random() * fruits.length)];
+  const fx = Math.floor(Math.random() * 20) * box;
+  const fy = Math.floor(Math.random() * 20) * box;
   return {
-    x: Math.floor(Math.random() * 20) * box,
-    y: Math.floor(Math.random() * 20) * box,
+    // x: Math.floor(Math.random() * 20) * box,
+    // y: Math.floor(Math.random() * 20) * box,
+    // img: fruit.img
+    gx: fx,
+    gy: fy,
+    x: fx,
+    y: fy,
     img: fruit.img
   };
 }
@@ -88,8 +95,8 @@ ctx.restore();
   ctx.shadowColor = "yellow";
   ctx.shadowBlur = 15;
 
-  const cx = food.x + box / 2;
-  const cy = food.y + box / 2;
+  const cx = food.gx + box / 2;
+  const cy = food.gy + box / 2;
 
   ctx.drawImage(
     food.img,
@@ -156,7 +163,7 @@ function update() {
     }
 
   // Eating fruit
-  if (head.x === food.x && head.y === food.y) {
+  if (head.x === food.gx && head.y === food.gy) {
     score++;
     food = randomFruit();
 
@@ -169,6 +176,7 @@ function update() {
 
   } else {
     snake.pop();
+    snakePixelPos.pop();
   }
 
   draw();
