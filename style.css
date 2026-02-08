@@ -22,7 +22,7 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
   width: 100%;
-  max-width: 450px; /* limits container width on large screens */
+  max-width: 450px;
 }
 
 h1 {
@@ -64,24 +64,47 @@ button:hover {
   border-radius: 15px;
   background-color: #111;
   display: block;
-  margin: 0 auto;
-  width: 100%; /* responsive width */
-  height: auto; /* maintain aspect ratio */
-  max-width: 400px; /* original canvas size */
+  margin: 0 auto 10px auto;
+  width: 100%;
+  height: auto;
+  max-width: 400px;
 }
 
-/* Responsive adjustments for small screens */
+/* Mobile Controls */
+.mobile-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.middle-row {
+  display: flex;
+  gap: 10px;
+}
+
+.mobile-controls button {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5em;
+  padding: 0;
+}
+
+/* Responsive adjustments */
 @media (max-width: 500px) {
   h1 {
     font-size: 1.5em;
   }
-
   #score {
     font-size: 1.2em;
   }
-
   button {
     padding: 6px 12px;
     font-size: 0.9em;
+  }
+  .mobile-controls button {
+    width: 50px;
+    height: 50px;
+    font-size: 1.3em;
   }
 }
