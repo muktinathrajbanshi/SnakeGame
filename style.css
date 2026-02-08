@@ -11,8 +11,8 @@ body {
   min-height: 100vh;
   background: linear-gradient(135deg, #1e3c72, #2a5298);
   font-family: "Poppins", sans-serif;
-  margin: 0;
   color: #fff;
+  padding: 10px;
 }
 
 .game-container {
@@ -21,6 +21,8 @@ body {
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
+  width: 100%;
+  max-width: 450px; /* limits container width on large screens */
 }
 
 h1 {
@@ -50,6 +52,7 @@ button {
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.2s;
+  font-size: 1em;
 }
 
 button:hover {
@@ -62,4 +65,23 @@ button:hover {
   background-color: #111;
   display: block;
   margin: 0 auto;
+  width: 100%; /* responsive width */
+  height: auto; /* maintain aspect ratio */
+  max-width: 400px; /* original canvas size */
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 500px) {
+  h1 {
+    font-size: 1.5em;
+  }
+
+  #score {
+    font-size: 1.2em;
+  }
+
+  button {
+    padding: 6px 12px;
+    font-size: 0.9em;
+  }
 }

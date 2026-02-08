@@ -1,11 +1,13 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const box = 20; // size of snake segment and fruit
+// Audio (Ensures game doesn't crash if files are missing)
+const eatSound = new Audio("sounds/eat.wav");
+const deathSound = new Audio("sounds/death.mp3");
 
+const box = 20; 
 const snakeSize = 20;
 const fruitSize = 30;
-
 const canvasSize = 400;
 
 let snake = [{x: 8 * box, y: 8 * box}];
@@ -13,11 +15,13 @@ let snakePixelPos = snake.map(seg => ({x: seg.x, y: seg.y}));
 let direction = 'RIGHT';
 let nextDirection = 'RIGHT';
 let score = 0;
-let gameSpeed = 200; // starting speed in ms
+let gameSpeed = 200; 
 let gameInterval;
 let isPaused = false;
+
+// Animation Variables
 let pulse = 0;
-let pulseSpeed = 0.1;
+let pulseSpeed = 0.15; // Speed of the squish animation
 
 // Load fruit images
 const fruitImages = {
@@ -28,14 +32,12 @@ const fruitImages = {
   watermelon: new Image()
 };
 
-// Set image sources (make sure you have images in the "fruits" folder)
 fruitImages.apple.src = 'fruits/apple.png';
 fruitImages.banana.src = 'fruits/banana.png';
 fruitImages.grapes.src = 'fruits/grapes.png';
 fruitImages.orange.src = 'fruits/orange.png';
 fruitImages.watermelon.src = 'fruits/watermelon.png';
 
-// List of fruits
 const fruits = [
   {name: 'apple', img: fruitImages.apple},
   {name: 'banana', img: fruitImages.banana},
@@ -44,74 +46,104 @@ const fruits = [
   {name: 'watermelon', img: fruitImages.watermelon}
 ];
 
-// Generate random fruit
 let food = randomFruit();
 
 function randomFruit() {
-  const fruit = fruits[Math.floor(Math.random() * fruits.length)];
   const fx = Math.floor(Math.random() * 20) * box;
   const fy = Math.floor(Math.random() * 20) * box;
+  const fruitType = fruits[Math.floor(Math.random() * fruits.length)];
   return {
-    // x: Math.floor(Math.random() * 20) * box,
-    // y: Math.floor(Math.random() * 20) * box,
-    // img: fruit.img
     gx: fx,
     gy: fy,
     x: fx,
     y: fy,
-    img: fruit.img
+    img: fruitType.img
   };
 }
 
-// Draw the snake and fruit
+// Draw Function
 function draw() {
+  // 1. Update Animation Pulse
+  pulse += pulseSpeed;
+  const fruitScale = 1 + 0.15 * Math.sin(pulse);
 
-// pulse animation
-pulse += pulseSpeed;
-const scale = 1 + 0.2 * Math.sin(pulse);
+  // 2. Background
+  ctx.fillStyle = '#1a1a1a'; // Slightly lighter than pure black for contrast
+  ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-// background 
-ctx.fillStyle = '#111';
-ctx.fillRect(0, 0, canvasSize, canvasSize);
+  // 3. Draw Snake (Paper Craft Style)
+  for (let i = 0; i < snake.length; i++) {
+    ctx.save();
+    
+    // Smooth Interpolation for visual position
+    const visualX = snakePixelPos[i].x;
+    const visualY = snakePixelPos[i].y;
+    const centerX = visualX + snakeSize / 2;
+    const centerY = visualY + snakeSize / 2;
 
-// Draw snake with shadow
-for (let i = 0; i < snake.length; i++) {
-ctx.save();
-ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-ctx.shadowBlur = 5;
-ctx.fillStyle = i === 0 ? 'lime' : 'green';
+    // Squish Logic: Create a wave effect down the body
+    const segmentPulse = Math.sin(pulse - (i * 0.8)) * 0.15;
+    const widthChange = snakeSize * segmentPulse;
+    const heightChange = snakeSize * -segmentPulse;
 
-ctx.fillRect(
-    snakePixelPos[i].x, 
-    snakePixelPos[i].y, 
-    snakeSize, 
-    snakeSize
-);
-ctx.restore();
-}
+    // Drop Shadow for Paper Look
+    ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
 
-  // Draw fruit with glow & pulse
+    // Colors
+    ctx.fillStyle = (i % 2 === 0) ? '#8DB600' : '#4B5320';
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)"; // Very faint paper edge
+    
+    // Draw Segment
+    ctx.beginPath();
+    ctx.roundRect(
+      visualX - widthChange / 2, 
+      visualY - heightChange / 2, 
+      snakeSize + widthChange, 
+      snakeSize + heightChange, 
+      5 // rounded corners
+    );
+    ctx.fill();
+    ctx.stroke();
+
+    // Eyes on Head
+    if (i === 0) {
+      ctx.shadowBlur = 0; // Remove shadow from eyes
+      ctx.fillStyle = "black";
+      const eyeOffset = snakeSize / 4;
+      
+      ctx.beginPath();
+      ctx.arc(centerX - eyeOffset, centerY - eyeOffset, 2, 0, Math.PI * 2);
+      ctx.arc(centerX + eyeOffset, centerY - eyeOffset, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+
+  // 4. Draw Fruit (Glow & Pulse)
   ctx.save();
-  ctx.shadowColor = "yellow";
-  ctx.shadowBlur = 15;
+  ctx.shadowColor = "rgba(255, 255, 0, 0.5)";
+  ctx.shadowBlur = 20;
 
-  const cx = food.gx + box / 2;
-  const cy = food.gy + box / 2;
+  const foodCenterX = food.gx + box / 2;
+  const foodCenterY = food.gy + box / 2;
 
   ctx.drawImage(
     food.img,
-    cx - (fruitSize * scale) / 2,
-    cy - (fruitSize * scale) / 2,
-    fruitSize * scale,
-    fruitSize * scale
+    foodCenterX - (fruitSize * fruitScale) / 2,
+    foodCenterY - (fruitSize * fruitScale) / 2,
+    fruitSize * fruitScale,
+    fruitSize * fruitScale
   );
   ctx.restore();
 
-  // score
+  // 5. Score Update
   document.getElementById('score').innerText = score;
 }
 
-// Control snake direction
+// Input Handling
 document.addEventListener('keydown', (event) => {
   if (event.key === 'ArrowUp' && direction !== 'DOWN') nextDirection = 'UP';
   else if (event.key === 'ArrowDown' && direction !== 'UP') nextDirection = 'DOWN';
@@ -119,7 +151,6 @@ document.addEventListener('keydown', (event) => {
   else if (event.key === 'ArrowRight' && direction !== 'LEFT') nextDirection = 'RIGHT';
 });
 
-// Check collision with walls or self
 function collision(head, array) {
   for (let i = 0; i < array.length; i++) {
     if (head.x === array[i].x && head.y === array[i].y) return true;
@@ -127,7 +158,7 @@ function collision(head, array) {
   return false;
 }
 
-// Update game state
+// Update Game State
 function update() {
   if (isPaused) return;
 
@@ -139,50 +170,55 @@ function update() {
   if (direction === 'UP') head.y -= box;
   if (direction === 'DOWN') head.y += box;
 
-  // Game over
+  // Check Game Over
   if (
     head.x < 0 || head.x >= canvasSize ||
     head.y < 0 || head.y >= canvasSize ||
     collision(head, snake)
   ) {
     clearInterval(gameInterval);
+    deathSound.play().catch(() => {}); // catch error if sound file missing
     alert(`Game Over! Your score: ${score}`);
     return;
   }
 
+  // Add new head
   snake.unshift(head);
+  snakePixelPos.unshift({ x: head.x, y: head.y });
 
-  if (snakePixelPos.length < snake.length) {
-    snakePixelPos.unshift({ x: head.x, y: head.y });
-  }
-
-  // Smooth interpolation for each snake segment
-    for (let i = 0; i < snake.length; i++) {
-    snakePixelPos[i].x += (snake[i].x - snakePixelPos[i].x) * 0.2;
-    snakePixelPos[i].y += (snake[i].y - snakePixelPos[i].y) * 0.2;
-    }
-
-  // Eating fruit
+  // Handle Food
   if (head.x === food.gx && head.y === food.gy) {
     score++;
+    eatSound.play().catch(() => {});
     food = randomFruit();
 
-    // Increase speed every 5 points
+    // Speed up logic
     if (score % 5 === 0 && gameSpeed > 50) {
       gameSpeed -= 15;
       clearInterval(gameInterval);
       gameInterval = setInterval(update, gameSpeed);
     }
-
   } else {
     snake.pop();
     snakePixelPos.pop();
   }
-
-  draw();
 }
 
-// Buttons
+// Visual Smooth Loop (Independent of game speed for smooth animation)
+function gameLoop() {
+  // Smoothly slide visual positions toward logical positions
+  for (let i = 0; i < snake.length; i++) {
+    if (snakePixelPos[i]) {
+      snakePixelPos[i].x += (snake[i].x - snakePixelPos[i].x) * 0.2;
+      snakePixelPos[i].y += (snake[i].y - snakePixelPos[i].y) * 0.2;
+    }
+  }
+  
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+// UI Buttons
 document.getElementById('pauseBtn').addEventListener('click', () => {
   isPaused = !isPaused;
   document.getElementById('pauseBtn').innerText = isPaused ? 'Resume' : 'Pause';
@@ -192,6 +228,6 @@ document.getElementById('restartBtn').addEventListener('click', () => {
   location.reload();
 });
 
-// Start the game
-draw();
+// Start Everything
 gameInterval = setInterval(update, gameSpeed);
+gameLoop();
